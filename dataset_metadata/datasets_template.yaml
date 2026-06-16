@@ -1,0 +1,63 @@
+Description_Organization_Dataset: value
+Origin_Content: value
+Type: code/text
+License: []
+Topics/Source Relevancy:
+  qualitative_assessment:
+    score: low/medium/high
+    explanation: value
+  quantitative_assessment:
+    topics: ["topic1", "topic2", "etc"]
+    score: ["percentage1", "percentage2", "etc"]
+Languages:
+  quantitative_assessment:
+    languages: ["language1", "language2"]
+    score: ["percentage1", "percentage2"]
+Quality_assurance:
+  qualitative_assessment:
+    score: low/medium/high
+    explanation: value
+  quantitative_assessment:
+    score: value -- distribution of perplexity
+Date_Created:
+  qualitative_assessment:
+    pre-1950: value
+    1950-2000: value
+    2000-2020: value
+    post-2020: value
+Collection_Methods: value
+Date_Collected: value
+Author_Dataset: value
+Available_Metadata:
+  qualitative_assessment:
+    score: sufficient/insufficient
+    explanation: value
+Modifications_made: value
+Personal_Data_in_Set:
+  qualitative_assessment:      
+    categories: []
+    sensitivity: low/medium/high
+    frequency: low/medium/high
+    explanation: value
+  quantitative_assessment:
+    detailed_PII_assessment: to-be-constructed (curation_output)
+Reason_for_Personal_Data: value
+Accuracy_Assurance_Personal_Data:
+  qualitative_assessment:
+    score: low/medium/high
+    explanation: value
+Right_of_Access_GDPR: value
+Assurance_of_no_confidential_protected_information: value
+Harmful_Data_in_Set:
+  qualitative_assessment:
+    sensitivity: low/medium/high
+    frequency: low/medium/high
+    explanation: value
+  quantitative_assessment:
+    detailed_HL_assessment: to-be-constructed (curation output)
+Ethical_Review: value
+Author_Background: value
+Diversity_Metadata: value
+Potential_Biases: value
+Bias_Mitigations: value
+Additional_Information: value

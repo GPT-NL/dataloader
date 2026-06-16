@@ -1,0 +1,48 @@
+# https://github.com/google/sentencepiece/blob/master/doc/options.md
+input: 
+input_format: text
+model_prefix: "gpt-nl-128k"
+model_type: "bpe"
+byte_fallback: true
+vocab_size: 128000
+shuffle_input_sentence: true
+add_dummy_prefix: true
+num_threads: 16
+control_symbols: []
+control_symbols_file: ""
+user_defined_symbols:
+- <|im_start|>
+- <|im_end|>
+- <|system|>
+- <|user|>
+- <|assistant|>
+
+user_defined_symbols_file: ""
+split_digits: true
+normalization_rule_tsv : nfc.tsv
+
+max_sentence_length : 65535
+
+# For code treat whitespaces as actual character
+allow_whitespace_only_pieces: true # true if whitespace tokens are manually added
+split_by_whitespace: true
+remove_extra_whitespaces : false # depending on normalization and user defined symbols
+
+unk_piece: "<unk>"
+bos_piece: "<s>"
+eos_piece: "</s>"
+pad_piece: "<pad>"
+
+unk_id: 0
+bos_id: 1
+eos_id: 2
+pad_id: 3
+
+# Whitespace tokens
+unicode_space_tokens: 9
+tabulation_tokens: 9
+newline_tokens: 9
+
+
+reserved_tokens_template: <reserved_token_{}>
+reserved_tokens: 99

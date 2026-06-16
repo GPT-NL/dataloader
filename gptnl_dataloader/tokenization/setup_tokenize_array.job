@@ -1,0 +1,111 @@
+#!/bin/bash
+
+# Setup script to count files and generate the SBATCH script
+
+echo "Counting files in data directories..."
+JOB_SUBMIT_PATH="tokenize_job_array.job"
+
+ENV=${HOME}/dataloader/.env # path to the .env file in the dataloader repository
+
+DATA_ROOT_TRAIN=${GPTNL_SCRATCH}"/gpt_nl_dataset_v2.0_bucketed/buckets_split_train"
+DATA_ROOT_VAL=${GPTNL_SCRATCH}"/gpt_nl_dataset_v2.0_bucketed/buckets_split_validate"
+# OUTPUT_DIR=${GPTNL_2_TOKENIZED}
+OUTPUT_DIR=${GPTNL_SCRATCH}"/gpt_nl_dataset_v2.0_tokenized"
+CACHE_DIR=${GPTNL_SCRATCH}"/.hf_cache_dir"
+TOKENIZER=${GPTNL_TOKENIZER}
+VENV=${HOME}/dataloader/.venv
+
+mkdir -p $OUTPUT_DIR $CACHE_DIR
+QUALITY_DIRS=(new_high_quality new_low_medium_quality english_low_medium_quality dutch_low_medium_quality english_high_quality other_languages dutch_high_quality code)
+QUALITY_LIST=$(IFS=,; echo "${QUALITY_DIRS[*]}")
+
+TOTAL_FILES=$(eval "find {$DATA_ROOT_TRAIN,$DATA_ROOT_VAL}/{$QUALITY_LIST} -name '*.parquet'" | wc -l)
+echo "Found $TOTAL_FILES files to process"
+
+CONCURRENT_JOBS=200
+NPROCS=20
+# Given genoa partition which has 192 cores
+NCPUS=$((NPROCS < 24 ? 24 : NPROCS))
+
+# Create the SBATCH script
+cat > $JOB_SUBMIT_PATH << EOF
+#!/bin/bash
+#SBATCH --job-name=tokenize_dataset_array
+#SBATCH --partition=genoa
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=$NCPUS
+#SBATCH --time=1:00:00
+#SBATCH --output=logs/tokenized_%A_%a.out
+#SBATCH --error=logs/tokenized_%A_%a.err
+#SBATCH --array=1-${TOTAL_FILES}%${CONCURRENT_JOBS}
+
+source $VENV/bin/activate
+
+echo "Starting tokenization job array task \$SLURM_ARRAY_TASK_ID on \$(hostname) at \$(date)"
+echo "Job ID: \$SLURM_JOB_ID, Array Task ID: \$SLURM_ARRAY_TASK_ID"
+echo "Available cores: \$(nproc)"
+
+FILE_LIST="file_list_\${SLURM_JOB_ID}.txt"
+
+if [ ! -f "\$FILE_LIST" ]; then
+    echo "Task \$SLURM_ARRAY_TASK_ID creating file list..."
+    find {$DATA_ROOT_TRAIN,$DATA_ROOT_VAL}/{$QUALITY_LIST} -name "*.parquet" | \\
+        sort > "\$FILE_LIST"
+    
+    echo "Found \$(wc -l < "\$FILE_LIST") files to process"
+fi
+
+# Wait for file list to be created
+while [ ! -f "\$FILE_LIST" ]; do
+    sleep 1
+done
+
+
+FILE_TO_PROCESS=\$(sed -n "\${SLURM_ARRAY_TASK_ID}p" "\$FILE_LIST")
+if [ -z "\$FILE_TO_PROCESS" ]; then
+    echo "No file found for array task \$SLURM_ARRAY_TASK_ID"
+    exit 0
+fi
+
+echo "Processing file: \$FILE_TO_PROCESS"
+
+# Extract directory and filename
+DIR_PATH=\$(dirname "\$FILE_TO_PROCESS")
+FILE_NAME=\$(basename "\$FILE_TO_PROCESS")
+QUALITY_DIR=\$(basename "\$(dirname "\$FILE_TO_PROCESS")")
+SPLIT=\$(basename "\$(dirname "\$(dirname "\$FILE_TO_PROCESS")")")
+OUTPUT_DIR="$OUTPUT_DIR/\$SPLIT/\$QUALITY_DIR"
+
+mkdir -p "\$OUTPUT_DIR"
+
+# ValueError: Column to remove ['extraction_timestamp', 'dataset_license', 'extraction_uid', 'extra'] not in the dataset. Current columns in the dataset: ['n_non_symbol_words', 'title', 'author', 'text', 'license', 'dataset_name', 'language', 'language_score', 'dataset_url', 'n_char', 'id', 'source', 'avg_word_length', 'doc_id', 'dataset_quality', 'is_code', 'is_new_epoch_2', 'original_file_path', 'dataset_folder']
+# n_non_symbol_words', 'title', 'author', 'text', 'license', 'dataset_name', 'language', 'language_score', 'dataset_url', 'n_char', 'id', 'source', 'avg_word_length', 'doc_id', 'dataset_quality', 'is_code', 'is_new_epoch_2', 'original_file_path', 'dataset_folder
+
+python tokenize_text.py \\
+        --data_path "\$DIR_PATH" \\
+        --output_dir "\$OUTPUT_DIR" \\
+        --cache_dir "$CACHE_DIR" \\
+        --remove_columns source title n_non_symbol_words license dataset_name author dataset_url n_char id avg_word_length  \\
+        --tokenizer "$TOKENIZER" \\
+        --data_type pretraining \\
+        --file_pattern "\$FILE_NAME" \\
+        --eos 2 \\
+        --num-proc "$NPROCS" \\
+
+echo "Completed processing: \$FILE_TO_PROCESS at \$(date)"
+
+rm \$FILE_LIST
+
+EOF
+
+chmod +x $JOB_SUBMIT_PATH
+
+echo ""
+echo "Generated $JOB_SUBMIT_PATH"
+echo "To submit the job array, run:"
+echo "  sbatch $JOB_SUBMIT_PATH"
+echo ""
+echo "Job array configuration:"
+echo "  - Total jobs: $TOTAL_FILES"
+echo "  - Max concurrent jobs: $CONCURRENT_JOBS"
+echo "  - Each task uses $NPROCS processes on $NCPUS cores"

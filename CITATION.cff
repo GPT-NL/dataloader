@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+title: GPT-NL Data Loader
+message: >-
+  If you use this software, please cite it using the
+  metadata below.
+type: software
+authors:
+  - family-names: Barkhof
+    given-names: Claartje M.
+    affiliation: TNO
+  - family-names: Mensio
+    given-names: Martino
+    affiliation: TNO
+    orcid: 'https://orcid.org/0000-0002-9875-6396'
+  - family-names: Oort
+    name-particle: van
+    given-names: Jesse
+    affiliation: TNO
+    orcid: 'https://orcid.org/0009-0000-9327-3726'
+  - family-names: Oliveira Filho
+    given-names: Julio A.
+    name-particle: de
+    affiliation: TNO
+    orcid: 'https://orcid.org/0000-0001-5152-4902'
+repository-code: 'https://github.com/GPT-NL/dataloader'
+url: 'https://github.com/GPT-NL/dataloader'
+abstract: >
+  Bucketing, tokenizing, and distributing mixing of
+  structured data, supporting the construction of
+  the GPT-NL model.
+keywords:
+  - GPT-NL
+  - natural language processing
+  - large language models
+  - bucketing
+  - tokenization
+  - distribution mixing
+license: Apache-2.0
+

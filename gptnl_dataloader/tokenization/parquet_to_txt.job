@@ -1,0 +1,17 @@
+#!/bin/bash
+#SBATCH --job-name=parquet_to_txt
+#SBATCH --partition=rome
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=16
+#SBATCH --time=1:00:00
+
+
+VENV_PATH=...
+GPTNL_DATALOADER=... # path to dataloader repository
+
+source $VENV_PATH/bin/activate
+source $GPTNL_DATALOADER/.env
+
+python parquet_to_txt.py \
+    --base_dir ${GPTNL_1_BUCKETED}/bucketing_output \
+    --output_txt ${GPTNL_1_DATASET}/tokenizer_subset_1.0.txt \
